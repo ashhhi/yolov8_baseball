@@ -32,7 +32,7 @@ class YOLO(object):
         #---------------------------------------------------------------------#
         #   输入图片的大小，必须为32的倍数。
         #---------------------------------------------------------------------#
-        "input_shape"       : [640, 640],
+        "input_shape"       : [416, 416],
         #------------------------------------------------------#
         #   所使用到的yolov8的版本：
         #   n : 对应yolov8_n
@@ -41,7 +41,7 @@ class YOLO(object):
         #   l : 对应yolov8_l
         #   x : 对应yolov8_x
         #------------------------------------------------------#
-        "phi"               : 's',
+        "phi"               : 'n',
         #---------------------------------------------------------------------#
         #   只有得分大于置信度的预测框会被保留下来
         #---------------------------------------------------------------------#
@@ -59,7 +59,7 @@ class YOLO(object):
         #   是否使用Cuda
         #   没有GPU可以设置成False
         #-------------------------------#
-        "cuda"              : True,
+        "cuda"              : False,
     }
 
     @classmethod
@@ -116,7 +116,7 @@ class YOLO(object):
     #   检测图片
     #---------------------------------------------------#
     def detect_image(self, image, crop = False, count = False):
-        torch.cuda.synchronize()
+        # torch.cuda.synchronize()
         start = time.time()
         #---------------------------------------------------#
         #   计算输入图片的高和宽
@@ -145,7 +145,7 @@ class YOLO(object):
             #---------------------------------------------------------#
             #   将图像输入网络当中进行预测！
             #---------------------------------------------------------#
-            print(images.shape)
+
             outputs = self.net(images)
             
             outputs = self.bbox_util.decode_box(outputs)
@@ -161,7 +161,7 @@ class YOLO(object):
             top_label   = np.array(results[0][:, 5], dtype = 'int32')
             top_conf    = results[0][:, 4]
             top_boxes   = results[0][:, :4]
-        torch.cuda.synchronize()
+        # torch.cuda.synchronize()
         end = time.time()
         print('time:', end-start)
         #---------------------------------------------------------#

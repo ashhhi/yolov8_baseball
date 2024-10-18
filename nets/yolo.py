@@ -92,13 +92,6 @@ class DFL(nn.Module):
 class YoloBody(nn.Module):
     def __init__(self, input_shape, num_classes, phi, pretrained=False):
         super(YoloBody, self).__init__()
-        depth_dict          = {'n' : 0.33, 's' : 0.33, 'm' : 0.67, 'l' : 1.00, 'x' : 1.00,}
-        width_dict          = {'n' : 0.25, 's' : 0.50, 'm' : 0.75, 'l' : 1.00, 'x' : 1.25,}
-        deep_width_dict     = {'n' : 1.00, 's' : 1.00, 'm' : 0.75, 'l' : 0.50, 'x' : 0.50,}
-        dep_mul, wid_mul, deep_mul = depth_dict[phi], width_dict[phi], deep_width_dict[phi]
-
-        base_channels       = int(wid_mul * 64)  # 64
-        base_depth          = max(round(dep_mul * 3), 1)  # 3
         #-----------------------------------------------#
         #   输入图片是3, 416, 416
         #-----------------------------------------------#
@@ -127,7 +120,7 @@ class YoloBody(nn.Module):
         self.shape      = None
         self.nl         = len(ch)
         # self.stride     = torch.zeros(self.nl)
-        self.stride     = torch.tensor([256 / x.shape[-2] for x in self.backbone.forward(torch.zeros(1, 3, 416, 416))])  # forward
+        self.stride     = torch.tensor([256 / x.shape[-2] for x in self.backbone.forward(torch.zeros(1, 3, 256, 256))])  # forward
         self.reg_max    = 16  # DFL channels (ch[0] // 16 to scale 4/8/12/16/20 for n/s/m/l/x)
         self.no         = num_classes + self.reg_max * 4  # number of outputs per anchor
         self.num_classes = num_classes
