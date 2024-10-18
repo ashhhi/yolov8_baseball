@@ -4,6 +4,38 @@ import numpy as np
 from .NAM import cbam_block
 
 
+class SiLU(nn.Module):
+    # SiLU激活函数
+    @staticmethod
+    def forward(x):
+        return x * torch.sigmoid(x)
+
+def autopad(k, p=None, d=1):
+    # kernel, padding, dilation
+    # 对输入的特征层进行自动padding，按照Same原则
+    if d > 1:
+        # actual kernel-size
+        k = d * (k - 1) + 1 if isinstance(k, int) else [d * (x - 1) + 1 for x in k]
+    if p is None:
+        # auto-pad
+        p = k // 2 if isinstance(k, int) else [x // 2 for x in k]
+    return p
+
+class Conv(nn.Module):
+    # 标准卷积+标准化+激活函数
+    default_act = SiLU()
+    def __init__(self, c1, c2, k=1, s=1, p=None, g=1, d=1, act=True):
+        super().__init__()
+        self.conv   = nn.Conv2d(c1, c2, k, s, autopad(k, p, d), groups=g, dilation=d, bias=False)
+        self.bn     = nn.BatchNorm2d(c2, eps=0.001, momentum=0.03, affine=True, track_running_stats=True)
+        self.act    = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
+
+    def forward(self, x):
+        return self.act(self.bn(self.conv(x)))
+
+    def forward_fuse(self, x):
+        return self.act(self.conv(x))
+
 class RepVGGBlock(nn.Module):
     def __init__(self, in_channels, out_channels, stride=1, groups=1, deploy=False):
         super(RepVGGBlock, self).__init__()
@@ -205,28 +237,32 @@ class EfficientRep(nn.Module):
     def __init__(self, config):
         super(EfficientRep, self).__init__()
         self.RepVGGBlock = RepVGGBlock(3, 32, stride=2)
-        # self.cbam1 = cbam_block(32)
+        self.cbam1 = cbam_block(32)
         self.ERBlock_2 = ERBlock(32, 64, config[0])
-        # self.cbam2 = cbam_block(64)
+        self.cbam2 = cbam_block(64)
         self.ERBlock_3 = ERBlock(64, 128, config[1])
         self.cbam3 = cbam_block(128)
-        self.ERBlock_4 = ERBlock(128, 128, config[2])
-        self.cbam4 = cbam_block(128)
-        self.ERBlock_5 = ERBlock(128, 128, config[3])
-        self.SimSPPF = SimSPPF(128, 128)
+        self.ERBlock_4 = ERBlock(128, 256, config[2])
+        self.cbam4 = cbam_block(256)
+        self.ERBlock_5 = ERBlock(256, 512, config[3])
+        self.SimSPPF = SimSPPF(512, 512)
 
     def forward(self, x):
         x = self.RepVGGBlock(x)
-        # x = self.cbam1(x)
+
+        x = self.cbam1(x)
         x = self.ERBlock_2(x)
-        # x = self.cbam2(x)
-        x = self.ERBlock_3(x)
-        x = self.cbam3(x)
-        head1 = self.ERBlock_4(x)
-        x = self.cbam4(head1)
-        x = self.ERBlock_5(head1)
-        head2 = self.SimSPPF(x)
-        return head1, head2
+
+        x = self.cbam2(x)
+        feat3 = self.ERBlock_3(x)
+
+        x = self.cbam3(feat3)
+        feat4 = self.ERBlock_4(x)
+
+        x = self.cbam4(feat4)
+        x = self.ERBlock_5(x)
+        feat5 = self.SimSPPF(x)
+        return feat3, feat4, feat5
 
     def to_deploy(self):
         self.RepVGGBlock.to_deploy()

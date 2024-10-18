@@ -8612,7 +8612,7 @@
     &quot;ASKED_MARK_IGNORED_FILES_AS_EXCLUDED&quot;: &quot;true&quot;,
     &quot;Python.1.executor&quot;: &quot;Run&quot;,
     &quot;Python.annotate.executor&quot;: &quot;Run&quot;,
-    &quot;Python.train.executor&quot;: &quot;Run&quot;,
+    &quot;Python.train.executor&quot;: &quot;Debug&quot;,
     &quot;Python.voc_annotation.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
@@ -8754,7 +8754,7 @@
       <updated>1729065463862</updated>
       <workItem from="1729065464891" duration="908000" />
       <workItem from="1729068558082" duration="3582000" />
-      <workItem from="1729126267083" duration="12863000" />
+      <workItem from="1729126267083" duration="19388000" />
     </task>
     <servers />
   </component>
@@ -8769,16 +8769,40 @@
           <line>95</line>
           <option name="timeStamp" value="2" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/nets/yolo.py</url>
+          <line>172</line>
+          <option name="timeStamp" value="25" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/nets/yolo.py</url>
+          <line>162</line>
+          <option name="timeStamp" value="26" />
+        </line-breakpoint>
       </breakpoints>
+      <default-breakpoints>
+        <breakpoint type="python-exception">
+          <properties notifyOnTerminate="true" exception="BaseException">
+            <option name="notifyOnTerminate" value="true" />
+          </properties>
+        </breakpoint>
+      </default-breakpoints>
     </breakpoint-manager>
     <watches-manager>
       <configuration name="PythonConfigurationType">
         <watch expression="pred_cls.shape" language="Python" />
+        <watch expression="feat3.shape" language="Python" />
+        <watch expression="feat4.shape" language="Python" />
         <watch expression="feats[0]" language="Python" />
+        <watch expression="feat1.shape" language="Python" />
+        <watch expression="feat4" language="Python" />
+        <watch expression="feat4.shape" language="Python" />
         <watch expression="y.shape" language="Python" />
         <watch expression="strides" language="Python" />
         <watch expression="P4.shape" language="Python" />
+        <watch expression="feat3.shape" language="Python" />
         <watch expression="feats[0].shape" language="Python" />
+        <watch expression="feat2.shape" language="Python" />
         <watch expression="out1.shape" language="Python" />
         <watch expression="feats" language="Python" />
         <watch expression="feats.shape" language="Python" />
@@ -8793,11 +8817,12 @@
         <watch expression="feat2.shape" language="Python" />
         <watch expression="P4" language="Python" />
         <watch expression="P5.shape" language="Python" />
+        <watch expression="x.shape" language="Python" />
       </configuration>
     </watches-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Baseball_YOLO$train.coverage" NAME="train Coverage Results" MODIFIED="1729155542132" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Baseball_YOLO$train.coverage" NAME="train Coverage Results" MODIFIED="1729161910323" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Baseball_YOLO$1.coverage" NAME="1 Coverage Results" MODIFIED="1729069972663" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Baseball_YOLO$annotate.coverage" NAME="annotate Coverage Results" MODIFIED="1729070035548" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Baseball_YOLO$voc_annotation.coverage" NAME="voc_annotation Coverage Results" MODIFIED="1729144809631" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

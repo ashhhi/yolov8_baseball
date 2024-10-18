@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from nets.backbone import backbone
+from nets.backbone import backbone, Conv
 from nets.yolo_training import weights_init
 from utils.utils_bbox import make_anchors
 
@@ -113,17 +113,17 @@ class YoloBody(nn.Module):
         self.backbone   = backbone(pretrained=pretrained)
 
         #------------------------加强特征提取网络------------------------# 
-        self.upsample   = nn.Upsample(scale_factor=2, mode="nearest")
+        # self.upsample   = nn.Upsample(scale_factor=2, mode="nearest")
 
         self.conv_for_P5 = BasicConv(128, 128, 1)
 
-        self.upsample = Upsample(128, 128)
-
+        self.upsample1 = Upsample(512, 256)
+        self.upsample2 = Upsample(256, 128)
         #------------------------加强特征提取网络------------------------# 
 
 
 
-        ch              = [base_channels * 4, base_channels * 8, int(base_channels * 16 * deep_mul)]
+        ch              = [128, 256, 512]
         self.shape      = None
         self.nl         = len(ch)
         # self.stride     = torch.zeros(self.nl)
@@ -132,11 +132,12 @@ class YoloBody(nn.Module):
         self.no         = num_classes + self.reg_max * 4  # number of outputs per anchor
         self.num_classes = num_classes
 
-        self.yolo_headP4 = yolo_head([256, self.no], 256)
-        self.yolo_headP5 = yolo_head([128, self.no], 128)
+        self.yolo_headP3 = yolo_head([256, 128], 256)
+        self.yolo_headP4 = yolo_head([512, 256], 512)
+        self.yolo_headP5 = yolo_head([512, 512], 512)
         c2, c3   = max((16, ch[0] // 4, self.reg_max * 4)), max(ch[0], num_classes)  # channels
-        # self.cv2 = nn.ModuleList(nn.Sequential(Conv(x, c2, 3), Conv(c2, c2, 3), nn.Conv2d(c2, 4 * self.reg_max, 1)) for x in ch)
-        # self.cv3 = nn.ModuleList(nn.Sequential(Conv(x, c3, 3), Conv(c3, c3, 3), nn.Conv2d(c3, num_classes, 1)) for x in ch)
+        self.cv2 = nn.ModuleList(nn.Sequential(Conv(x, c2, 3), Conv(c2, c2, 3), nn.Conv2d(c2, 4 * self.reg_max, 1)) for x in ch)
+        self.cv3 = nn.ModuleList(nn.Sequential(Conv(x, c3, 3), Conv(c3, c3, 3), nn.Conv2d(c3, num_classes, 1)) for x in ch)
         if not pretrained:
             weights_init(self)
         self.dfl = DFL(self.reg_max) if self.reg_max > 1 else nn.Identity()
@@ -153,28 +154,35 @@ class YoloBody(nn.Module):
     
     def forward(self, x):
 
-        # feat1: [128, 26, 26] feat2: [128, 13, 13]
-        feat1, feat2 = self.backbone(x)
+        # feat3: [128, 52, 52] feat4: [256, 26, 26] feat5: [512, 13, 13]
+        feat3, feat4, feat5 = self.backbone(x)
 
-        # 128, 13, 13 -> 128, 13, 13
-        P5 = self.conv_for_P5(feat2)
-        out0 = self.yolo_headP5(P5)
+        P5 = self.yolo_headP5(feat5)
 
-        # 128, 13, 13 ->  128, 26, 26
-        P5_Upsample = self.upsample(P5)
-        # 128, 26, 26 + 128, 26, 26 -> 256, 26, 26
-        P4 = torch.cat([P5_Upsample, feat1], dim=1)
+        # 512, 13, 13 ->  256, 26, 26
+        P5_Upsample = self.upsample1(P5)
+        # 512, 26, 26
+        P4 = torch.cat([P5_Upsample, feat4], dim=1)
+        P4 = self.yolo_headP4(P4)
 
-        # 256, 26, 26 -> 26,26,256 -> 26,26,255
-        out1 = self.yolo_headP4(P4)
+        # 128, 52, 52
+        P4_upsample = self.upsample2(P4)
+        # 256, 52, 52
+        P3 = torch.cat([P4_upsample, feat3], dim=1)
+        # 128, 52, 52
+        P3 = self.yolo_headP3(P3)
 
-        x = [out0, out1]
 
-        shape = out1.shape
+        x = [P3, P4, P5]
 
-        if self.shape != out1.shape:
+        shape = x[0].shape
+
+        for i in range(self.nl):
+            x[i] = torch.cat((self.cv2[i](x[i]), self.cv3[i](x[i])), 1)
+
+        if self.shape != shape:
             self.anchors, self.strides = (x.transpose(0, 1) for x in make_anchors(x, self.stride, 0.5))
-            self.shape = out1.shape
+            self.shape = shape
 
         # num_classes + self.reg_max * 4 , 8400 =>  cls num_classes, 8400;
         #                                           box self.reg_max * 4, 8400
